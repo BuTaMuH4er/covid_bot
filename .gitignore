@@ -1,0 +1,6 @@
+*.log
+.DS_Store
+__pycache__/
+users.csv
+vaccines_data.txt
+config.py
