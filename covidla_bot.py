@@ -3,7 +3,7 @@ from telegram import ReplyKeyboardMarkup, ParseMode
 from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
 import csv, logging, time
 from datetime import datetime
-from take_vacine import take_data_message, write_or_not, take_from_file
+from take_vacine import take_data_message, write_or_not, take_from_file, add_user_db, remove_user_db, distribution_list, del_distribution_list
 
 logging.basicConfig(filename='bot.log', level=logging.INFO)
 
@@ -40,12 +40,13 @@ def start_bot(update, context):
 
 
 def add_user(update, context):
-    chat_id = update.message.chat.id
-    if str(chat_id) in read_list_users():
+    chat_id = str(update.message.chat.id)
+    username = update.message.chat.username
+    add_user = add_user_db(chat_id, username)
+    if add_user == False:
         return update.message.reply_text(f'Вы уже есть в списке. Сообщение о наличии вакцины будет после обновления. \n'
                                   f'Актуальная информация с сайта mos.ru по нажатию кнопки "Есть чо?"')
     else:
-        write_user_chat_id(chat_id)
         update.message.reply_text(f'Вы добавлены в список рассылки. В случае обновления информации я вас проинформирую. \n'
                               f'Актуальная информация с сайта mos.ru по нажатию кнопки "Есть чо?"')
 
@@ -53,15 +54,8 @@ def add_user(update, context):
 
 def remove_user(update, context):
     update.message.reply_text(f'Тогда помочь вам нечем. Если вы были в списке рассылки, то больше я вас не побеспокою.')
-    chat_id = update.message.chat.id
-    list_users = read_list_users()
-    list_users.remove(str(chat_id))
-    try:
-        with open('users.csv', 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(map(lambda x: [x], list_users))
-    except FileNotFoundError:
-        pass
+    chat_id = str(update.message.chat.id)
+    remove_user_db(chat_id)
 
 
 def send_data_vaccine(update, context):
@@ -74,10 +68,11 @@ def send_new_data_vaccine(context):
     ask_vaccine = write_or_not()
     if ask_vaccine:
         vaccines = take_from_file()
-        chat_ids = read_list_users()
+        chat_ids = distribution_list()
         for men in chat_ids:
             for key, val in vaccines.items():
                 dp.bot.send_message(chat_id=men, text=f'<b>{key}</b>:\n{val}', parse_mode=ParseMode.HTML)
+            del_distribution_list(men)
             time.sleep(15) #пока сообщения будут так отправляться, необходимо написать класс для очереди сообщений
 
 

@@ -1,5 +1,7 @@
 from lxml import html
+from models import User
 import requests
+from db import db_session
 
 def take_data_message():
     vaccines = dict()
@@ -38,3 +40,33 @@ def write_or_not():
         write_vaccines_data(vaccines_internet)
         return True
 
+
+def add_user_db(chat_id, name):
+    find_user = User.query.filter_by(chat_id=chat_id).first()
+    if find_user == None:
+        new_user = User(chat_id=chat_id, name=name, subscribe=True, send_info=False)
+        db_session.add(new_user)
+        db_session.commit()
+        return False
+    else:
+        find_user.subscribe = True
+        find_user.send_info = False
+        db_session.commit()
+        return True
+
+
+def remove_user_db(chat_id):
+    find_user = User.query.filter_by(chat_id=chat_id).first()
+    find_user.subscribe = False
+    db_session.commit()
+
+
+def distribution_list():
+    distribution_list = User.query.filter(User.send_info == False, User.subscribe == True).all()
+    return [x.chat_id for x in distribution_list]
+
+
+def del_distribution_list(chat_id):
+    user_send_message = User.query.filter_by(chat_id=chat_id).first()
+    user_send_message.send_info = True
+    db_session.commit()
