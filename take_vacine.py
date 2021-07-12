@@ -1,5 +1,5 @@
 from lxml import html
-from models import User
+from models import User, Vaccine
 import requests
 from db import db_session
 
@@ -35,9 +35,9 @@ def take_from_file():
 
 def write_or_not():
     vaccines_internet = take_data_message()
-    vaccines_from_file = take_from_file()
-    if vaccines_internet != vaccines_from_file:
-        write_vaccines_data(vaccines_internet)
+    vaccines_from_db = take_vaccine_db()
+    if vaccines_internet != vaccines_from_db:
+        write_vaccine_db(vaccines_internet)
         return True
 
 
@@ -48,6 +48,7 @@ def add_user_db(chat_id, name):
         db_session.add(new_user)
         db_session.commit()
         return False
+    #нужно добавить проверку есть ли подписка и тогда выдавать сообщение что пользователь снова подписан
     else:
         find_user.subscribe = True
         find_user.send_info = False
@@ -70,3 +71,24 @@ def del_distribution_list(chat_id):
     user_send_message = User.query.filter_by(chat_id=chat_id).first()
     user_send_message.send_info = True
     db_session.commit()
+
+
+def take_vaccine_db():
+    vaccines = dict()
+    all_vaccines_db = Vaccine.query.all()
+    for i in all_vaccines_db:
+        vaccines[i.vaccine] = i.info_availability
+    return vaccines
+
+
+def write_vaccine_db(vaccines):
+    for vaccine, info in vaccines.items():
+        new_vaccine = Vaccine(vaccine=vaccine, info_availability=info)
+        take_from_table = Vaccine.query.filter_by(vaccine=vaccine).first()
+        if take_from_table != None:
+            take_from_table.info_availability = info
+        else:
+            db_session.add(new_vaccine)
+        db_session.commit()
+
+

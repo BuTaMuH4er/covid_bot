@@ -43,7 +43,7 @@ def add_user(update, context):
     chat_id = str(update.message.chat.id)
     username = update.message.chat.username
     add_user = add_user_db(chat_id, username)
-    if add_user == False:
+    if add_user == True:
         return update.message.reply_text(f'Вы уже есть в списке. Сообщение о наличии вакцины будет после обновления. \n'
                                   f'Актуальная информация с сайта mos.ru по нажатию кнопки "Есть чо?"')
     else:
