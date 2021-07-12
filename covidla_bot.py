@@ -3,7 +3,7 @@ from telegram import ReplyKeyboardMarkup, ParseMode
 from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
 import csv, logging, time
 from datetime import datetime
-from take_vacine import take_data_message, write_or_not, take_from_file, add_user_db, remove_user_db, distribution_list, del_distribution_list
+from take_vacine import take_data_message, write_or_not, take_vaccine_db, add_user_db, remove_user_db, distribution_list, del_distribution_list
 
 logging.basicConfig(filename='bot.log', level=logging.INFO)
 
@@ -67,7 +67,7 @@ def send_data_vaccine(update, context):
 def send_new_data_vaccine(context):
     ask_vaccine = write_or_not()
     if ask_vaccine:
-        vaccines = take_from_file()
+        vaccines = take_vaccine_db()
         chat_ids = distribution_list()
         for men in chat_ids:
             for key, val in vaccines.items():

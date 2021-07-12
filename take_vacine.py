@@ -17,22 +17,6 @@ def take_data_message():
     return vaccines
 
 
-def write_vaccines_data(vacc_dict):
-    with open('vaccines_data.txt', 'w') as file:
-        file.seek(0)
-        for key,val in vacc_dict.items():
-            file.write('{};{}\n'.format(key,val))
-
-
-def take_from_file():
-    vaccines = dict()
-    with open('vaccines_data.txt', 'r') as file:
-        for line in file.readlines():
-            key,val = line.strip().split(';')
-            vaccines[key] = val
-    return vaccines
-
-
 def write_or_not():
     vaccines_internet = take_data_message()
     vaccines_from_db = take_vaccine_db()
@@ -49,6 +33,11 @@ def add_user_db(chat_id, name):
         db_session.commit()
         return False
     #нужно добавить проверку есть ли подписка и тогда выдавать сообщение что пользователь снова подписан
+    elif find_user.chat_id == chat_id and find_user.subscribe == False:
+        find_user.subscribe = True
+        find_user.send_info = False
+        db_session.commit()
+        return False
     else:
         find_user.subscribe = True
         find_user.send_info = False
