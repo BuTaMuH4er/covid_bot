@@ -66,9 +66,9 @@ def send_data_vaccine(update, context):
 
 def send_new_data_vaccine(context):
     ask_vaccine = write_or_not()
-    if ask_vaccine:
+    chat_ids = distribution_list()
+    if ask_vaccine or len(chat_ids) > 0:
         vaccines = take_vaccine_db()
-        chat_ids = distribution_list()
         for men in chat_ids:
             for key, val in vaccines.items():
                 dp.bot.send_message(chat_id=men, text=f'<b>{key}</b>:\n{val}', parse_mode=ParseMode.HTML)
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     dp = mybot.dispatcher
 
     jq = mybot.job_queue
-    jq.run_repeating(send_new_data_vaccine, interval=1800)
+    jq.run_repeating(send_new_data_vaccine, interval=900)
 
     dp.add_handler(CommandHandler('start', start_bot, pass_user_data=True))
     dp.add_handler(MessageHandler(Filters.regex('^Да$'), add_user))

@@ -21,6 +21,7 @@ def write_or_not():
     vaccines_internet = take_data_message()
     vaccines_from_db = take_vaccine_db()
     if vaccines_internet != vaccines_from_db:
+        distribution_list_edit()
         write_vaccine_db(vaccines_internet)
         return True
 
@@ -79,5 +80,14 @@ def write_vaccine_db(vaccines):
         else:
             db_session.add(new_vaccine)
         db_session.commit()
+
+
+def distribution_list_edit():
+    distribution_list = User.query.filter(User.send_info == True, User.subscribe == True).all()
+    for every in distribution_list:
+        every.send_info = False
+        db_session.commit()
+
+
 
 

@@ -4,3 +4,4 @@ __pycache__/
 users.csv
 vaccines_data.txt
 config.py
+test_db.py
