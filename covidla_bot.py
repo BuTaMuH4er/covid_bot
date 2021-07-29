@@ -4,6 +4,12 @@ from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
 import csv, logging, time
 from datetime import datetime
 from take_vacine import take_data_message, write_or_not, take_vaccine_db, add_user_db, remove_user_db, distribution_list, del_distribution_list
+from celery import Celery
+from celery.schedules import crontab
+
+celery_app = Celery('covid_tasks', broker='redis://localhost:6379/0')
+mybot = Updater(API_KEY_BOT, use_context=True)
+dp = mybot.dispatcher
 
 logging.basicConfig(filename='bot.log', level=logging.INFO)
 
@@ -51,7 +57,6 @@ def add_user(update, context):
                               f'Актуальная информация с сайта mos.ru по нажатию кнопки "Есть чо?"')
 
 
-
 def remove_user(update, context):
     update.message.reply_text(f'Тогда помочь вам нечем. Если вы были в списке рассылки, то больше я вас не побеспокою.')
     chat_id = str(update.message.chat.id)
@@ -64,6 +69,7 @@ def send_data_vaccine(update, context):
         update.message.reply_text(f'<b>{key}</b>:\n{val}', parse_mode=ParseMode.HTML)
 
 
+@celery_app.task(bind=True)
 def send_new_data_vaccine(context):
     ask_vaccine = write_or_not()
     chat_ids = distribution_list()
@@ -72,17 +78,18 @@ def send_new_data_vaccine(context):
         for men in chat_ids:
             for key, val in vaccines.items():
                 dp.bot.send_message(chat_id=men, text=f'<b>{key}</b>:\n{val}', parse_mode=ParseMode.HTML)
+                time.sleep(1)
             del_distribution_list(men)
             time.sleep(15) #пока сообщения будут так отправляться, необходимо написать класс для очереди сообщений
 
 
+@celery_app.on_after_configure.connect
+def periodic_tasks(sender, **kwargs):
+    sender.add_periodic_task(crontab(minute='*/10'), send_new_data_vaccine.s())
+    #sender.add_periodic_task(600.0, send_new_data_vaccine.s())
+
 if __name__ == '__main__':
 
-    mybot = Updater(API_KEY_BOT, use_context=True)
-    dp = mybot.dispatcher
-
-    jq = mybot.job_queue
-    jq.run_repeating(send_new_data_vaccine, interval=900)
 
     dp.add_handler(CommandHandler('start', start_bot, pass_user_data=True))
     dp.add_handler(MessageHandler(Filters.regex('^Да$'), add_user))
