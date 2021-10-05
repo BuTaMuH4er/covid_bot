@@ -1,11 +1,11 @@
 from lxml import html
 from models import User, Vaccine
-import requests
+import requests, tor_proxy
 from db import db_session
 
 def take_data_message():
     vaccines = dict()
-    url = 'https://www.mos.ru/city/projects/covid-19/privivka/#!%2Ftab%2F316410519-2'
+    url = 'https://www.mos.ru/city/projects/covid-19/privivka/#!/tab/316410519-2'
     headers = {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:85.0) Gecko/20100101 Firefox/85.0'}
     page = requests.get(url, headers=headers).text
     tree = html.fromstring(page)
@@ -13,7 +13,9 @@ def take_data_message():
     for i in messages_vacine:
         str_full = i.text_content().strip()
         list_strings = str_full.split('\n')
-        vaccines[list_strings[0].strip()] = list_strings[1].strip().capitalize().split('.')[0]
+        vaccine_name = (list_strings[0].strip().split('»')[0])[1:]
+        vaccine_body = (list_strings[0][list_strings[0].find('»')+1:]).strip().capitalize()
+        vaccines[vaccine_name] = vaccine_body
     return vaccines
 
 

@@ -6,7 +6,7 @@ from datetime import datetime
 from take_vacine import take_data_message, write_or_not, take_vaccine_db, add_user_db, remove_user_db, distribution_list, del_distribution_list
 from celery import Celery
 from celery.schedules import crontab
-from telegram.ext import  messagequeue as mq
+from telegram.ext import messagequeue as mq
 from telegram.utils.request import Request
 
 celery_app = Celery('covid_tasks', broker='redis://localhost:6379/0')
@@ -30,7 +30,7 @@ class MQBot(telegram.bot.Bot):
 
 
 def main():
-    request = Request( con_pool_size=8)
+    request = Request(con_pool_size=8)
     bot = MQBot(API_KEY_BOT, request=request)
     mybot = Updater(bot=bot, use_context=True)
     dp = mybot.dispatcher
@@ -101,6 +101,12 @@ def send_data_vaccine(update, context):
 
 @celery_app.task(bind=True)
 def send_new_data_vaccine(context):
+
+    request = Request(con_pool_size=8)
+    bot = MQBot(API_KEY_BOT, request=request)
+    mybot = Updater(bot=bot, use_context=True)
+    dp = mybot.dispatcher
+
     ask_vaccine = write_or_not()
     chat_ids = distribution_list()
     if ask_vaccine or len(chat_ids) > 0:
